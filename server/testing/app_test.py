@@ -90,6 +90,12 @@ class TestApp:
         with app.app_context():
 
             m = Message.query.first()
+            if m is None:
+                m = Message(
+                    body="Hello 👋",
+                )
+                db.session.add(m)
+                db.session.commit()
             id = m.id
             body = m.body
 
@@ -140,10 +146,12 @@ class TestApp:
             
             db.session.add(hello_from_liza)
             db.session.commit()
+            print(f'Before delete:{hello_from_liza.id}')
 
-            app.test_client().delete(
+            response=app.test_client().delete(
                 f'/messages/{hello_from_liza.id}'
             )
-
-            h = Message.query.filter_by(body="Hello 👋").first()
+            print("Delete response",response.status_code,response.json)
+            db.session.expire_all()
+            h = Message.query.get(hello_from_liza.id)
             assert(not h)
